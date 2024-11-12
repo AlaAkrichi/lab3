@@ -1,0 +1,33 @@
+---
+- name : "get adresses from workers"
+  hosts: workers
+  gather_facts: yes
+  become: true
+  tasks: 
+    - name: gather info
+      ansible.builtin.setup:
+        filter: 
+          - 'ansible_all_ipv4_addresses'
+          - 'ansible_all_ipv6_addresses'
+          - 'ansible_distribution'
+    - name: print the info
+      debug:
+        var: System {{ inventory_hostname }} ipv4  {{ansible_all_ipv4_addresses}}  ipv6 {{ansible_all_ipv6_addresses}}distribution {{ansible_distribution}} 
+    - name : os version
+      debug:
+        var: "Type d'OS : {{ ansible_facts['os_family'] }}"
+      when: ansible_facts['os_family'] in ["Debian","Centos6"]
+    - name : reboot httpd
+      command: sudo systemctl reboot httpd
+      when: ansible_facts['os_family'] in ["Debian","Centos6"]
+    - name: get webserveur users
+      command: cat /etc/passwd
+      register: user_list
+    - name: show users list 
+      debug:
+        var : user_list.stdout
+    - name: reboot
+      ansible.builtin.reboot:
+        reboot_timeout: 3600
+    
+
